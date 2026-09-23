@@ -1,0 +1,108 @@
+name: Deploy Agent
+
+on:
+  push:
+    branches: ['**']
+
+env:
+  REGISTRY: ghcr.io
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # --- Step 1: Check Secrets (skip expensive build if config missing) ---
+      - name: Check Deployment Secrets
+        id: check
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        run: |
+          if [ -z "$RAILWAY_TOKEN" ]; then
+            echo "configured=false" >> $GITHUB_OUTPUT
+            echo "::notice title=Deployment Skipped::Missing RAILWAY_TOKEN secret. Skipping build and deployment to save runner minutes."
+            echo "## ⚠️ Deployment Skipped: Config Missing" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "The build and deployment were skipped to avoid wasting runner minutes because **\`RAILWAY_TOKEN\`** is not configured." >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### 📋 How to Configure Railway Deployment:" >> $GITHUB_STEP_SUMMARY
+            echo "1. Create an account or project at **[railway.com](https://railway.com)**" >> $GITHUB_STEP_SUMMARY
+            echo "2. Generate your API token at **[railway.com/account/tokens](https://railway.com/account/tokens)**" >> $GITHUB_STEP_SUMMARY
+            echo "3. In this GitHub repository, go to **Settings → Secrets and variables → Actions**" >> $GITHUB_STEP_SUMMARY
+            echo "4. Click **New repository secret** and add:" >> $GITHUB_STEP_SUMMARY
+            echo "   - **Name**: \`RAILWAY_TOKEN\`" >> $GITHUB_STEP_SUMMARY
+            echo "   - **Secret**: \`<your-token-from-railway>\`" >> $GITHUB_STEP_SUMMARY
+            echo "5. *(Optional)* Add **\`RAILWAY_SERVICE_NAME\`** (default: \`agent-harness\`)" >> $GITHUB_STEP_SUMMARY
+            echo "6. *(Optional)* Add **\`RAILWAY_APP_URL\`** (e.g. \`https://my-agent.up.railway.app\`)" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "👉 [Open GitHub Secrets Settings](../../settings/secrets/actions)" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "configured=true" >> $GITHUB_OUTPUT
+          fi
+
+      # --- Step 2: Prepare Docker image tags ---
+      - name: Set lowercase image name
+        if: steps.check.outputs.configured == 'true'
+        run: echo "IMAGE_NAME=${GITHUB_REPOSITORY,,}" >> $GITHUB_ENV
+
+      # --- Step 3: Log in to GitHub Container Registry ---
+      - name: Log in to Container Registry
+        if: steps.check.outputs.configured == 'true'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # --- Step 4: Build and push Docker image ---
+      - name: Build and push Docker image
+        if: steps.check.outputs.configured == 'true'
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+
+      # --- Step 5: Deploy to Railway ---
+      - name: Deploy to Railway
+        if: steps.check.outputs.configured == 'true'
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          RAILWAY_SERVICE: ${{ secrets.RAILWAY_SERVICE_NAME || 'agent-harness' }}
+        run: |
+          npm install -g @railway/cli
+          railway up --service "$RAILWAY_SERVICE" --detach
+
+      # --- Step 6: View Deployment & Live Links ---
+      - name: Deployment Summary & Live Links
+        if: steps.check.outputs.configured == 'true'
+        run: |
+          SERVICE="${{ secrets.RAILWAY_SERVICE_NAME || 'agent-harness' }}"
+          if [ -n "${{ secrets.RAILWAY_APP_URL }}" ]; then
+            APP_URL="${{ secrets.RAILWAY_APP_URL }}"
+          else
+            APP_URL="https://${SERVICE}.up.railway.app"
+          fi
+
+          echo "## 🚀 Deployed Successfully to Railway!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Your agent is live and ready to accept requests." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 🌐 Live URLs & Endpoints" >> $GITHUB_STEP_SUMMARY
+          echo "- 🔗 **Application**: [$APP_URL]($APP_URL)" >> $GITHUB_STEP_SUMMARY
+          echo "- 🩺 **Health Check**: [$APP_URL/health]($APP_URL/health)" >> $GITHUB_STEP_SUMMARY
+          echo "- 🎛️ **Railway Dashboard**: [https://railway.com/dashboard](https://railway.com/dashboard)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 💬 Test Your Live Agent" >> $GITHUB_STEP_SUMMARY
+          echo '```bash' >> $GITHUB_STEP_SUMMARY
+          echo "curl -X POST $APP_URL/chat \\" >> $GITHUB_STEP_SUMMARY
+          echo '  -H "Content-Type: application/json" \' >> $GITHUB_STEP_SUMMARY
+          echo '  -d '\''{"message": "Hello! What can you do?"}'\''' >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY

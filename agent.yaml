@@ -1,0 +1,38 @@
+agent:
+  name: "harness-agent"
+  model: "openai/gpt-4o-mini"
+  fallback_model: "openai/gpt-4o-mini"
+
+instructions: |
+  You are a helpful assistant powered by Agent Harness.
+  You help users with research, calculations, and data management.
+  You can create database tables, store data, and run queries.
+  Be concise and accurate. Cite sources when possible.
+
+scope:
+  enabled: false
+  description: "Research questions, calculations, and data management"
+  rejection_message: "Sorry, that's outside my scope."
+
+limits:
+  max_iterations: 10
+  max_cost_usd: 0.50
+  timeout_seconds: 120
+  max_tool_output_chars: 8000
+
+database:
+  path: "agent_harness.db"       # Local SQLite file (default)
+  # url: ""                      # Set DATABASE_URL in .env for Postgres/MySQL/etc.
+
+tools:
+  enabled:
+    - web_search
+    - calculator
+    - read_url
+    - sql_query
+    - sql_execute
+    - sql_describe
+
+logging:
+  level: "INFO"
+  log_file: "agent.log"

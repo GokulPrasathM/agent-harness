@@ -1,0 +1,25 @@
+# Environment
+.env
+.venv/
+__pycache__/
+*.pyc
+
+# Logs
+*.log
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# uv
+uv.lock
+
+# Database
+*.db
+*.sqlite*
+agent_harness.db
+agent_forge.db
