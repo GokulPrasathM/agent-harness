@@ -50,7 +50,6 @@ def setup_logging(level: str = "INFO", log_file: str | None = None) -> None:
     )
 
 
-def get_logger(name: str = "agent-forge") -> structlog.stdlib.BoundLogger:
 def get_logger(name: str = "agent-harness") -> structlog.stdlib.BoundLogger:
     """Get a bound logger instance."""
     return structlog.get_logger(name)

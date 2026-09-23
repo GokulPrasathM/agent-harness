@@ -12,6 +12,7 @@ from rich.table import Table
 # Import tools to trigger registration
 import app.tools.calculator
 import app.tools.database
+import app.tools.gokul_profile
 import app.tools.read_url
 import app.tools.web_search  # noqa: F401
 from app.agent.loop import run_agent
@@ -20,7 +21,6 @@ from app.core.config import load_settings
 from app.core.logging import setup_logging
 from app.tools.registry import registry
 
-cli = typer.Typer(name="agent-forge", help="Production-grade AI agent template.")
 cli = typer.Typer(name="agent-harness", help="Production-grade AI agent template.")
 console = Console()
 
@@ -46,7 +46,6 @@ def chat(
             f"Scope: {'enabled' if cfg.scope.enabled else 'disabled'}\n"
             f"Tools: {', '.join(cfg.tools.enabled)}\n\n"
             f"Type 'quit' or 'exit' to stop.",
-            title="🔨 Agent Forge",
             title="🪢 Agent Harness",
             border_style="blue",
         )

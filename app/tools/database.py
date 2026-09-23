@@ -25,7 +25,6 @@ log = get_logger("database")
 
 def _get_db_path() -> str:
     """Get database path from config or default."""
-    return os.getenv("DATABASE_PATH", "agent_forge.db")
     return os.getenv("DATABASE_PATH", "agent_harness.db")
 
 

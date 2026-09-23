@@ -1,8 +1,8 @@
-# 🪢 Agent Harness
+# 🤖 Gokul AI — Personal Persona & Sandbox Agent
 
-> **Agent = Model + Harness Engineering**
+> **"Agent = Model + Harness Engineering"** — Customized as an interactive persona and playground agent for **Gokul Prasath M**.
 
-A production-grade, forkable AI agent template. A minimal, transparent harness in ~800 lines of Python. No framework magic, no hidden abstractions. **You own every line.**
+This branch runs **Gokul AI**: an interactive agent anyone can chat with to explore Gokul's actual projects (Nika-1.5B, S2 dataset, RAG chatbot), education, skills, achievements, or play around with tools and SQL database queries. Built using the [Agent Harness](https://github.com/GokulPrasathM/agent-harness) template.
 
 ---
 

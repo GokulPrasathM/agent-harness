@@ -9,6 +9,7 @@ from pydantic import BaseModel
 # Import tools to trigger registration
 import app.tools.calculator
 import app.tools.database
+import app.tools.gokul_profile
 import app.tools.read_url
 import app.tools.web_search
 from app.agent.loop import run_agent
